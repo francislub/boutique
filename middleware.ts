@@ -1,41 +1,47 @@
 import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
 import { getToken } from "next-auth/jwt"
+import type { NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
-  const token = await getToken({ req: request })
-  const isAuthenticated = !!token
-  const isAdmin = token?.role === "ADMIN"
-  const isClient = token?.role === "CLIENT"
+  const { pathname } = request.nextUrl
 
-  // Admin routes protection
-  if (request.nextUrl.pathname.startsWith("/admin")) {
-    if (!isAuthenticated || !isAdmin) {
+  // Get the token from the request
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  })
+
+  // Check if the path starts with /admin
+  const isAdminPath = pathname.startsWith("/admin")
+
+  // If the path is admin and the user is not an admin, redirect to signin
+  if (isAdminPath) {
+    if (!token) {
       const url = new URL("/auth/signin", request.url)
-      url.searchParams.set("callbackUrl", request.nextUrl.pathname)
+      url.searchParams.set("callbackUrl", pathname)
       return NextResponse.redirect(url)
+    }
+
+    if (token.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/", request.url))
     }
   }
 
-  // Client routes protection
-  if (
-    request.nextUrl.pathname.startsWith("/profile") ||
-    request.nextUrl.pathname.startsWith("/orders") ||
-    request.nextUrl.pathname.startsWith("/cart") ||
-    request.nextUrl.pathname.startsWith("/wishlist") ||
-    request.nextUrl.pathname.startsWith("/checkout")
-  ) {
-    if (!isAuthenticated) {
-      const url = new URL("/auth/signin", request.url)
-      url.searchParams.set("callbackUrl", request.nextUrl.pathname)
-      return NextResponse.redirect(url)
-    }
+  // Protected client routes that require authentication
+  const protectedClientPaths = ["/profile", "/orders", "/wishlist", "/checkout"]
+
+  const isProtectedClientPath = protectedClientPaths.some((path) => pathname.startsWith(path) || pathname === path)
+
+  if (isProtectedClientPath && !token) {
+    const url = new URL("/auth/signin", request.url)
+    url.searchParams.set("callbackUrl", pathname)
+    return NextResponse.redirect(url)
   }
 
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/profile/:path*", "/orders/:path*", "/cart", "/wishlist", "/checkout"],
+  matcher: ["/admin/:path*", "/profile/:path*", "/orders/:path*", "/wishlist/:path*", "/checkout/:path*"],
 }
 

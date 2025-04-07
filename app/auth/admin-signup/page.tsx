@@ -46,7 +46,7 @@ export default function AdminSignUp() {
 
     // Validate admin code (this is a simple example - in production, use a more secure method)
     // In a real application, this would be a secure code or invite-only system
-    if (formData.adminCode !== "ADMIN123") {
+    if (formData.adminCode !== "123") {
       setError("Invalid admin registration code")
       setIsLoading(false)
       return

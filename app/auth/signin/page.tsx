@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, ShieldCheck } from "lucide-react"
 import Link from "next/link"
 
 export default function SignIn() {
@@ -40,7 +40,21 @@ export default function SignIn() {
         return
       }
 
-      router.push(callbackUrl)
+      // Fetch user data to determine role
+      const userResponse = await fetch("/api/user")
+      if (userResponse.ok) {
+        const userData = await userResponse.json()
+
+        // Redirect based on user role
+        if (userData.role === "ADMIN") {
+          router.push("/admin")
+        } else {
+          router.push(callbackUrl)
+        }
+      } else {
+        // If we can't determine role, use the default callback
+        router.push(callbackUrl)
+      }
     } catch (error) {
       setError("An error occurred. Please try again.")
       setIsLoading(false)
@@ -93,11 +107,17 @@ export default function SignIn() {
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col">
+        <CardFooter className="flex flex-col space-y-4">
           <div className="text-sm text-muted-foreground text-center">
             Don&apos;t have an account?{" "}
             <Link href="/auth/signup" className="text-primary hover:underline">
               Sign up
+            </Link>
+          </div>
+          <div className="flex items-center justify-center text-sm text-muted-foreground">
+            <ShieldCheck className="h-4 w-4 mr-1" />
+            <Link href="/auth/admin-signup" className="text-primary hover:underline">
+              Admin Registration
             </Link>
           </div>
         </CardFooter>
