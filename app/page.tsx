@@ -5,13 +5,19 @@ import Image from "next/image"
 import { getAllProducts } from "@/lib/actions/product"
 import { getAllCategories } from "@/lib/actions/category"
 import { formatPrice } from "@/lib/utils"
-import { ArrowRight, ShoppingBag, Heart, TrendingUp } from "lucide-react"
+import { ArrowRight, ShoppingBag, Star, Truck, Shield, Clock } from "lucide-react"
 
 export default async function Home() {
   // Fetch featured products
   const { data: featuredProducts } = await getAllProducts({
     isFeatured: true,
     limit: 4,
+  })
+
+  // Fetch new arrivals
+  const { data: newArrivals } = await getAllProducts({
+    sort: "newest",
+    limit: 3,
   })
 
   // Fetch categories
@@ -21,18 +27,28 @@ export default async function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16 md:py-24">
-        <div className="container mx-auto px-4">
+      <section className="relative bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-24 md:py-32 overflow-hidden">
+        <div className="absolute inset-0 bg-[url('/placeholder.svg?height=1080&width=1920')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
+        <div className="absolute bottom-0 right-0 w-1/3 h-full bg-white/10 transform skew-x-12 -mr-32"></div>
+        <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">Discover Your Style</h1>
-            <p className="text-lg md:text-xl opacity-90 mb-8">
-              Explore our curated collection of premium clothing and accessories for every occasion.
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight">
+              Discover Your <span className="text-yellow-300">Perfect Style</span>
+            </h1>
+            <p className="text-lg md:text-xl opacity-90 mb-8 leading-relaxed">
+              Explore our curated collection of premium clothing and accessories for every occasion. Elevate your
+              wardrobe with the latest trends and timeless classics.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Button asChild size="lg" className="bg-white text-blue-700 hover:bg-gray-100">
+              <Button asChild size="lg" className="bg-white text-blue-700 hover:bg-gray-100 font-semibold">
                 <Link href="/products">Shop Now</Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="border-white text-white hover:bg-white/10 font-semibold"
+              >
                 <Link href="/categories">Browse Categories</Link>
               </Button>
             </div>
@@ -44,7 +60,10 @@ export default async function Home() {
       <section className="py-16 bg-gray-50 dark:bg-gray-900">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold">Featured Products</h2>
+            <div>
+              <h2 className="text-3xl font-bold">Featured Products</h2>
+              <p className="text-gray-600 dark:text-gray-400 mt-2">Handpicked selections from our collection</p>
+            </div>
             <Button asChild variant="ghost" className="gap-1">
               <Link href="/products?featured=true">
                 View All <ArrowRight className="h-4 w-4" />
@@ -55,14 +74,14 @@ export default async function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {featuredProducts?.map((product) => (
               <Link key={product.id} href={`/products/${product.slug}`} className="group">
-                <Card className="overflow-hidden h-full transition-all hover:shadow-md">
+                <Card className="overflow-hidden h-full transition-all hover:shadow-lg border-0 bg-white dark:bg-gray-800">
                   <div className="aspect-square relative overflow-hidden bg-gray-100 dark:bg-gray-800">
                     {product.images && product.images.length > 0 ? (
                       <Image
                         src={product.images[0] || "/placeholder.svg"}
                         alt={product.name}
                         fill
-                        className="object-cover transition-transform group-hover:scale-105"
+                        className="object-cover transition-transform group-hover:scale-110 duration-500"
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center bg-gray-200 dark:bg-gray-700">
@@ -70,13 +89,21 @@ export default async function Home() {
                       </div>
                     )}
                     {product.compareAtPrice && product.compareAtPrice > product.price && (
-                      <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                      <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
                         Sale
                       </div>
                     )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                      <Button size="sm" variant="secondary" className="w-full">
+                        Quick View
+                      </Button>
+                    </div>
                   </div>
                   <CardContent className="p-4">
-                    <h3 className="font-medium text-lg mb-1 line-clamp-1">{product.name}</h3>
+                    <h3 className="font-medium text-lg mb-1 line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                      {product.name}
+                    </h3>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="font-bold">{formatPrice(product.price)}</span>
@@ -85,6 +112,10 @@ export default async function Home() {
                             {formatPrice(product.compareAtPrice)}
                           </span>
                         )}
+                      </div>
+                      <div className="flex items-center text-yellow-500">
+                        <Star className="h-4 w-4 fill-current" />
+                        <span className="ml-1 text-sm font-medium">4.8</span>
                       </div>
                     </div>
                   </CardContent>
@@ -95,11 +126,59 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* New Arrivals Banner */}
+      <section className="py-16 bg-white dark:bg-gray-800">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            <div>
+              <h2 className="text-3xl font-bold mb-4">New Arrivals</h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-6 text-lg">
+                Discover the latest additions to our collection. Fresh styles that just landed this week.
+              </p>
+              <Button asChild className="gap-2">
+                <Link href="/products?sort=newest">
+                  Shop New Arrivals <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {newArrivals?.map((product, index) => (
+                <Link key={product.id} href={`/products/${product.slug}`} className="group">
+                  <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700">
+                    {product.images && product.images.length > 0 ? (
+                      <Image
+                        src={product.images[0] || "/placeholder.svg"}
+                        alt={product.name}
+                        fill
+                        className="object-cover transition-transform group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center bg-gray-200 dark:bg-gray-700">
+                        <ShoppingBag className="h-8 w-8 text-gray-400" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                      <div className="p-3 w-full">
+                        <h3 className="text-white font-medium text-sm line-clamp-1">{product.name}</h3>
+                        <p className="text-white/90 font-bold text-sm">{formatPrice(product.price)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Categories */}
-      <section className="py-16">
+      <section className="py-16 bg-gray-50 dark:bg-gray-900">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold">Shop by Category</h2>
+            <div>
+              <h2 className="text-3xl font-bold">Shop by Category</h2>
+              <p className="text-gray-600 dark:text-gray-400 mt-2">Find exactly what you're looking for</p>
+            </div>
             <Button asChild variant="ghost" className="gap-1">
               <Link href="/categories">
                 All Categories <ArrowRight className="h-4 w-4" />
@@ -110,9 +189,9 @@ export default async function Home() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {mainCategories.map((category) => (
               <Link key={category.id} href={`/categories/${category.slug}`}>
-                <Card className="overflow-hidden h-full transition-all hover:shadow-md">
-                  <div className="aspect-square relative bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                    <div className="text-4xl p-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300">
+                <Card className="overflow-hidden h-full transition-all hover:shadow-md hover:scale-105 duration-300 border-0">
+                  <div className="aspect-square relative bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900 dark:to-indigo-950 flex items-center justify-center">
+                    <div className="text-4xl p-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 transition-transform group-hover:scale-110 duration-300">
                       {category.name.charAt(0)}
                     </div>
                   </div>
@@ -126,39 +205,135 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Testimonials */}
+      <section className="py-16 bg-white dark:bg-gray-800">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12">What Our Customers Say</h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card className="bg-gray-50 dark:bg-gray-900 border-0 shadow-sm hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex text-yellow-500 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-5 w-5 fill-current" />
+                  ))}
+                </div>
+                <p className="text-gray-700 dark:text-gray-300 mb-6 italic">
+                  "The quality of the clothes exceeded my expectations. The fabric is luxurious and the fit is perfect.
+                  Will definitely be shopping here again!"
+                </p>
+                <div className="flex items-center">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold mr-3">
+                    S
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Sarah Johnson</h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Loyal Customer</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gray-50 dark:bg-gray-900 border-0 shadow-sm hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex text-yellow-500 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-5 w-5 fill-current" />
+                  ))}
+                </div>
+                <p className="text-gray-700 dark:text-gray-300 mb-6 italic">
+                  "Fast shipping and excellent customer service. The attention to detail in packaging shows how much
+                  they care about their products and customers."
+                </p>
+                <div className="flex items-center">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold mr-3">
+                    M
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Michael Chen</h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Verified Buyer</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gray-50 dark:bg-gray-900 border-0 shadow-sm hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex text-yellow-500 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-5 w-5 fill-current" />
+                  ))}
+                </div>
+                <p className="text-gray-700 dark:text-gray-300 mb-6 italic">
+                  "I've been shopping here for years and have never been disappointed. The styles are always on trend
+                  and the quality is consistent. Highly recommend!"
+                </p>
+                <div className="flex items-center">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold mr-3">
+                    A
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Amelia Rodriguez</h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Fashion Enthusiast</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* Features */}
       <section className="py-16 bg-gray-50 dark:bg-gray-900">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">Why Shop With Us</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 mb-4 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="flex flex-col items-center text-center group">
+              <div className="w-16 h-16 mb-4 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 group-hover:scale-110 transition-transform duration-300">
                 <ShoppingBag className="h-8 w-8" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Premium Quality</h3>
+              <h3 className="text-xl font-bold mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                Premium Quality
+              </h3>
               <p className="text-gray-600 dark:text-gray-400">
                 Curated selection of high-quality clothing and accessories from top brands.
               </p>
             </div>
 
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 mb-4 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300">
-                <Heart className="h-8 w-8" />
+            <div className="flex flex-col items-center text-center group">
+              <div className="w-16 h-16 mb-4 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 group-hover:scale-110 transition-transform duration-300">
+                <Truck className="h-8 w-8" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Customer Satisfaction</h3>
+              <h3 className="text-xl font-bold mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                Fast Shipping
+              </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Dedicated to providing exceptional customer service and shopping experience.
+                Quick delivery to your doorstep with careful packaging and tracking.
               </p>
             </div>
 
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 mb-4 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300">
-                <TrendingUp className="h-8 w-8" />
+            <div className="flex flex-col items-center text-center group">
+              <div className="w-16 h-16 mb-4 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 group-hover:scale-110 transition-transform duration-300">
+                <Shield className="h-8 w-8" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Latest Trends</h3>
+              <h3 className="text-xl font-bold mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                Secure Payments
+              </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Stay ahead with our constantly updated collection featuring the latest fashion trends.
+                Your transactions are protected with industry-leading security protocols.
+              </p>
+            </div>
+
+            <div className="flex flex-col items-center text-center group">
+              <div className="w-16 h-16 mb-4 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 group-hover:scale-110 transition-transform duration-300">
+                <Clock className="h-8 w-8" />
+              </div>
+              <h3 className="text-xl font-bold mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                24/7 Support
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Our customer service team is always ready to assist you with any questions.
               </p>
             </div>
           </div>
@@ -166,24 +341,30 @@ export default async function Home() {
       </section>
 
       {/* Newsletter */}
-      <section className="py-16 bg-blue-600 text-white">
-        <div className="container mx-auto px-4">
+      <section className="py-16 bg-gradient-to-r from-blue-600 to-indigo-700 text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('/placeholder.svg?height=500&width=1920')] bg-cover bg-center opacity-10 mix-blend-overlay"></div>
+        <div className="absolute top-0 left-0 w-full h-12 bg-white/10 transform -skew-y-3"></div>
+        <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-2xl mx-auto text-center">
             <h2 className="text-3xl font-bold mb-4">Subscribe to Our Newsletter</h2>
-            <p className="mb-6 opacity-90">
-              Stay updated with the latest products, exclusive offers, and fashion tips.
+            <p className="mb-6 opacity-90 text-lg">
+              Stay updated with the latest products, exclusive offers, and fashion tips. Be the first to know about our
+              seasonal sales and new arrivals.
             </p>
-            <form className="flex flex-col sm:flex-row gap-2">
+            <form className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
               <input
                 type="email"
                 placeholder="Your email address"
                 className="flex-1 px-4 py-3 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-300"
                 required
               />
-              <Button type="submit" className="bg-white text-blue-600 hover:bg-gray-100">
+              <Button type="submit" className="bg-white text-blue-600 hover:bg-gray-100 font-semibold">
                 Subscribe
               </Button>
             </form>
+            <p className="mt-4 text-sm opacity-80">
+              By subscribing, you agree to our Privacy Policy and consent to receive updates from our company.
+            </p>
           </div>
         </div>
       </section>
@@ -288,6 +469,39 @@ export default async function Home() {
                   <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
                 </svg>
               </a>
+            </div>
+          </div>
+
+          {/* Admin Access Section */}
+          <div className="mt-8 pt-4 border-t border-gray-800">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4">
+              <p className="text-gray-500 text-sm">Admin Portal:</p>
+              <div className="flex gap-4">
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="text-gray-400 hover:text-white border-gray-700 hover:border-gray-500"
+                >
+                  <Link href="/auth/signin">Admin Login</Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="text-gray-400 hover:text-white border-gray-700 hover:border-gray-500"
+                >
+                  <Link href="/auth/signup">Admin Register</Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="text-gray-400 hover:text-white border-gray-700 hover:border-gray-500"
+                >
+                  <Link href="/admin">Admin Dashboard</Link>
+                </Button>
+              </div>
             </div>
           </div>
         </div>

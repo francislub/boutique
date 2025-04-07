@@ -9,12 +9,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, ShieldAlert } from "lucide-react"
 import Link from "next/link"
 import { createUser } from "@/lib/actions/user"
 import { UserRole } from "@prisma/client"
 
-export default function SignUp() {
+export default function AdminSignUp() {
   const router = useRouter()
   const [formData, setFormData] = useState({
     name: "",
@@ -22,6 +22,7 @@ export default function SignUp() {
     password: "",
     confirmPassword: "",
     phone: "",
+    adminCode: "", // Admin registration code for security
   })
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -43,23 +44,31 @@ export default function SignUp() {
       return
     }
 
+    // Validate admin code (this is a simple example - in production, use a more secure method)
+    // In a real application, this would be a secure code or invite-only system
+    if (formData.adminCode !== "ADMIN123") {
+      setError("Invalid admin registration code")
+      setIsLoading(false)
+      return
+    }
+
     try {
       const result = await createUser({
         name: formData.name,
         email: formData.email,
         password: formData.password,
         phone: formData.phone,
-        role: UserRole.CLIENT, // Explicitly set role to CLIENT
+        role: UserRole.ADMIN, // Set role to ADMIN
       })
 
       if (!result.success) {
-        setError(result.error || "Failed to create account")
+        setError(result.error || "Failed to create admin account")
         setIsLoading(false)
         return
       }
 
-      // Redirect to sign in page
-      router.push("/auth/signin?registered=true")
+      // Redirect to admin dashboard or sign in page
+      router.push("/auth/signin?registered=true&admin=true")
     } catch (error) {
       setError("An error occurred. Please try again.")
       setIsLoading(false)
@@ -68,10 +77,15 @@ export default function SignUp() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-muted/40">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md border-2 border-amber-500">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Create a Customer Account</CardTitle>
-          <CardDescription>Enter your information to create a customer account</CardDescription>
+          <div className="flex items-center justify-center mb-2">
+            <ShieldAlert className="h-10 w-10 text-amber-500" />
+          </div>
+          <CardTitle className="text-2xl font-bold text-center">Admin Registration</CardTitle>
+          <CardDescription className="text-center">
+            Create an administrator account for the boutique management system
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
@@ -86,7 +100,7 @@ export default function SignUp() {
               <Input
                 id="name"
                 name="name"
-                placeholder="John Doe"
+                placeholder="Admin Name"
                 value={formData.name}
                 onChange={handleChange}
                 required
@@ -98,7 +112,7 @@ export default function SignUp() {
                 id="email"
                 name="email"
                 type="email"
-                placeholder="name@example.com"
+                placeholder="admin@example.com"
                 value={formData.email}
                 onChange={handleChange}
                 required
@@ -137,22 +151,35 @@ export default function SignUp() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Creating account..." : "Create customer account"}
+            <div className="space-y-2">
+              <Label htmlFor="adminCode">Admin Registration Code</Label>
+              <Input
+                id="adminCode"
+                name="adminCode"
+                type="password"
+                placeholder="Enter admin registration code"
+                value={formData.adminCode}
+                onChange={handleChange}
+                required
+              />
+              <p className="text-xs text-muted-foreground mt-1">This code is provided by the system administrator</p>
+            </div>
+            <Button type="submit" className="w-full bg-amber-500 hover:bg-amber-600" disabled={isLoading}>
+              {isLoading ? "Creating admin account..." : "Create admin account"}
             </Button>
           </form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
           <div className="text-sm text-muted-foreground text-center">
-            Already have an account?{" "}
-            <Link href="/auth/signin" className="text-primary hover:underline">
+            Already have an admin account?{" "}
+            <Link href="/auth/signin" className="text-amber-500 hover:underline">
               Sign in
             </Link>
           </div>
           <div className="text-sm text-muted-foreground text-center">
-            Need an admin account?{" "}
-            <Link href="/auth/admin-signup" className="text-primary hover:underline">
-              Register as admin
+            Need a customer account instead?{" "}
+            <Link href="/auth/signup" className="text-primary hover:underline">
+              Register as customer
             </Link>
           </div>
         </CardFooter>
