@@ -90,7 +90,7 @@ export default function SignIn() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <Link href="/auth/forgot-password" className="text-sm text-primary hover:underline">
+                <Link href="/forgot-password" className="text-sm text-primary hover:underline">
                   Forgot password?
                 </Link>
               </div>
@@ -110,13 +110,13 @@ export default function SignIn() {
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-sm text-muted-foreground text-center">
             Don&apos;t have an account?{" "}
-            <Link href="/auth/signup" className="text-primary hover:underline">
+            <Link href="/signup" className="text-primary hover:underline">
               Sign up
             </Link>
           </div>
           <div className="flex items-center justify-center text-sm text-muted-foreground">
             <ShieldCheck className="h-4 w-4 mr-1" />
-            <Link href="/auth/admin-signup" className="text-primary hover:underline">
+            <Link href="/admin-signup" className="text-primary hover:underline">
               Admin Registration
             </Link>
           </div>

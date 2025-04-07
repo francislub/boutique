@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle, ShieldAlert } from "lucide-react"
+import { AlertCircle, ShieldCheck } from "lucide-react"
 import Link from "next/link"
 import { createUser } from "@/lib/actions/user"
 import { UserRole } from "@prisma/client"
@@ -22,7 +22,7 @@ export default function AdminSignUp() {
     password: "",
     confirmPassword: "",
     phone: "",
-    adminCode: "", // Admin registration code for security
+    adminCode: "",
   })
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -44,9 +44,9 @@ export default function AdminSignUp() {
       return
     }
 
-    // Validate admin code (this is a simple example - in production, use a more secure method)
-    // In a real application, this would be a secure code or invite-only system
+    // Validate admin code
     if (formData.adminCode !== "123") {
+      // In production, use a more secure method
       setError("Invalid admin registration code")
       setIsLoading(false)
       return
@@ -58,7 +58,7 @@ export default function AdminSignUp() {
         email: formData.email,
         password: formData.password,
         phone: formData.phone,
-        role: UserRole.ADMIN, // Set role to ADMIN
+        role: UserRole.ADMIN, // Explicitly set role to ADMIN
       })
 
       if (!result.success) {
@@ -67,8 +67,8 @@ export default function AdminSignUp() {
         return
       }
 
-      // Redirect to admin dashboard or sign in page
-      router.push("/auth/signin?registered=true&admin=true")
+      // Redirect to sign in page
+      router.push("/signin?registered=true")
     } catch (error) {
       setError("An error occurred. Please try again.")
       setIsLoading(false)
@@ -77,15 +77,13 @@ export default function AdminSignUp() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-muted/40">
-      <Card className="w-full max-w-md border-2 border-amber-500">
+      <Card className="w-full max-w-md border-amber-500">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-2">
-            <ShieldAlert className="h-10 w-10 text-amber-500" />
+            <ShieldCheck className="h-8 w-8 text-amber-500" />
           </div>
           <CardTitle className="text-2xl font-bold text-center">Admin Registration</CardTitle>
-          <CardDescription className="text-center">
-            Create an administrator account for the boutique management system
-          </CardDescription>
+          <CardDescription className="text-center">Create an administrator account</CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
@@ -157,12 +155,11 @@ export default function AdminSignUp() {
                 id="adminCode"
                 name="adminCode"
                 type="password"
-                placeholder="Enter admin registration code"
+                placeholder="Enter admin code"
                 value={formData.adminCode}
                 onChange={handleChange}
                 required
               />
-              <p className="text-xs text-muted-foreground mt-1">This code is provided by the system administrator</p>
             </div>
             <Button type="submit" className="w-full bg-amber-500 hover:bg-amber-600" disabled={isLoading}>
               {isLoading ? "Creating admin account..." : "Create admin account"}
@@ -171,14 +168,14 @@ export default function AdminSignUp() {
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
           <div className="text-sm text-muted-foreground text-center">
-            Already have an admin account?{" "}
-            <Link href="/auth/signin" className="text-amber-500 hover:underline">
+            Already have an account?{" "}
+            <Link href="/signin" className="text-primary hover:underline">
               Sign in
             </Link>
           </div>
           <div className="text-sm text-muted-foreground text-center">
             Need a customer account instead?{" "}
-            <Link href="/auth/signup" className="text-primary hover:underline">
+            <Link href="/signup" className="text-primary hover:underline">
               Register as customer
             </Link>
           </div>

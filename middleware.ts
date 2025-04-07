@@ -17,7 +17,7 @@ export async function middleware(request: NextRequest) {
   // If the path is admin and the user is not an admin, redirect to signin
   if (isAdminPath) {
     if (!token) {
-      const url = new URL("/auth/signin", request.url)
+      const url = new URL("/signin", request.url)
       url.searchParams.set("callbackUrl", pathname)
       return NextResponse.redirect(url)
     }
@@ -33,7 +33,7 @@ export async function middleware(request: NextRequest) {
   const isProtectedClientPath = protectedClientPaths.some((path) => pathname.startsWith(path) || pathname === path)
 
   if (isProtectedClientPath && !token) {
-    const url = new URL("/auth/signin", request.url)
+    const url = new URL("/signin", request.url)
     url.searchParams.set("callbackUrl", pathname)
     return NextResponse.redirect(url)
   }

@@ -59,7 +59,7 @@ export default function SignUp() {
       }
 
       // Redirect to sign in page
-      router.push("/auth/signin?registered=true")
+      router.push("/signin?registered=true")
     } catch (error) {
       setError("An error occurred. Please try again.")
       setIsLoading(false)
@@ -145,13 +145,13 @@ export default function SignUp() {
         <CardFooter className="flex flex-col space-y-2">
           <div className="text-sm text-muted-foreground text-center">
             Already have an account?{" "}
-            <Link href="/auth/signin" className="text-primary hover:underline">
+            <Link href="/signin" className="text-primary hover:underline">
               Sign in
             </Link>
           </div>
           <div className="text-sm text-muted-foreground text-center">
             Need an admin account?{" "}
-            <Link href="/auth/admin-signup" className="text-primary hover:underline">
+            <Link href="/admin-signup" className="text-primary hover:underline">
               Register as admin
             </Link>
           </div>

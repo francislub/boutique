@@ -120,13 +120,13 @@ export function SiteFooter() {
         <div className="mt-8 pt-6 border-t border-gray-800">
           <div className="flex flex-col md:flex-row justify-center items-center space-y-2 md:space-y-0 md:space-x-4">
             <span className="text-gray-500 text-sm">Admin Access:</span>
-            <Link href="/auth/signin" className="text-gray-400 hover:text-white text-sm transition-colors">
+            <Link href="/signin" className="text-gray-400 hover:text-white text-sm transition-colors">
               Admin Login
             </Link>
-            <Link href="/auth/admin-signup" className="text-gray-400 hover:text-white text-sm transition-colors">
+            <Link href="/admin-signup" className="text-gray-400 hover:text-white text-sm transition-colors">
               Admin Register
             </Link>
-            <Link href="/auth/signup" className="text-gray-400 hover:text-white text-sm transition-colors">
+            <Link href="/signup" className="text-gray-400 hover:text-white text-sm transition-colors">
               Customer Register
             </Link>
           </div>

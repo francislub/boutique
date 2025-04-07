@@ -1,15 +1,15 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
 import { getAllProducts } from "@/lib/actions/product"
 import { getAllCategories } from "@/lib/actions/category"
 import { formatPrice } from "@/lib/utils"
-import { ShoppingBag, Heart, Search, SlidersHorizontal } from "lucide-react"
+import { ShoppingBag, Heart } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { ProductFilters } from "@/components/products/product-filters"
+import { ProductSort } from "@/components/products/product-sort"
+
+// This is a server component that fetches data
 
 export default async function ProductsPage({
   searchParams,
@@ -24,14 +24,14 @@ export default async function ProductsPage({
     sale?: string
   }
 }) {
-  // Get filter parameters
-  const search = searchParams.search || ""
-  const categoryId = searchParams.category
-  const sort = searchParams.sort || "newest"
-  const minPrice = searchParams.min ? Number.parseFloat(searchParams.min) : undefined
-  const maxPrice = searchParams.max ? Number.parseFloat(searchParams.max) : undefined
-  const isFeatured = searchParams.featured === "true" ? true : undefined
-  const onSale = searchParams.sale === "true"
+  // Get filter parameters - properly handle searchParams
+  const search = searchParams?.search || ""
+  const categoryId = searchParams?.category
+  const sort = searchParams?.sort || "newest"
+  const minPrice = searchParams?.min ? Number.parseFloat(searchParams.min) : undefined
+  const maxPrice = searchParams?.max ? Number.parseFloat(searchParams.max) : undefined
+  const isFeatured = searchParams?.featured === "true" ? true : undefined
+  const onSale = searchParams?.sale === "true"
 
   // Fetch products with filters
   const { data: products, meta } = await getAllProducts({
@@ -63,100 +63,26 @@ export default async function ProductsPage({
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row gap-8">
         {/* Filters Sidebar */}
-        <div className="w-full md:w-64 space-y-6">
-          <div>
-            <h3 className="text-lg font-medium mb-4">Filters</h3>
-            <div className="space-y-4">
-              {/* Search */}
-              <div>
-                <label htmlFor="search" className="text-sm font-medium mb-2 block">
-                  Search
-                </label>
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input id="search" placeholder="Search products..." className="pl-8" defaultValue={search} />
-                </div>
-              </div>
-
-              {/* Categories */}
-              <div>
-                <label htmlFor="category" className="text-sm font-medium mb-2 block">
-                  Category
-                </label>
-                <Select defaultValue={categoryId}>
-                  <SelectTrigger id="category">
-                    <SelectValue placeholder="All Categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {categories?.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Price Range */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">Price Range</label>
-                <div className="pt-4 px-2">
-                  <Slider defaultValue={[0, 1000]} max={1000} step={10} className="mb-6" />
-                  <div className="flex items-center justify-between">
-                    <Input type="number" placeholder="Min" className="w-20" defaultValue={minPrice} />
-                    <span className="text-muted-foreground">to</span>
-                    <Input type="number" placeholder="Max" className="w-20" defaultValue={maxPrice} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Featured */}
-              <div className="flex items-center space-x-2">
-                <Checkbox id="featured" defaultChecked={isFeatured} />
-                <label
-                  htmlFor="featured"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Featured Products
-                </label>
-              </div>
-
-              {/* On Sale */}
-              <div className="flex items-center space-x-2">
-                <Checkbox id="sale" defaultChecked={onSale} />
-                <label
-                  htmlFor="sale"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  On Sale
-                </label>
-              </div>
-
-              <Button className="w-full">Apply Filters</Button>
-            </div>
-          </div>
+        <div className="w-full md:w-64">
+          <ProductFilters
+            categories={categories || []}
+            initialValues={{
+              search,
+              category: categoryId,
+              minPrice: minPrice || 0,
+              maxPrice: maxPrice || 1000,
+              isFeatured: isFeatured || false,
+              onSale,
+              sort,
+            }}
+          />
         </div>
 
         {/* Products Grid */}
         <div className="flex-1">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold">Products</h1>
-            <div className="flex items-center gap-2">
-              <Select defaultValue={sort}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">Newest</SelectItem>
-                  <SelectItem value="price-asc">Price: Low to High</SelectItem>
-                  <SelectItem value="price-desc">Price: High to Low</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="icon">
-                <SlidersHorizontal className="h-4 w-4" />
-              </Button>
-            </div>
+            <ProductSort initialSort={sort} />
           </div>
 
           {filteredProducts.length > 0 ? (
