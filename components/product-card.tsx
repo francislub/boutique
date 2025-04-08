@@ -9,6 +9,7 @@ import Link from "next/link"
 import { useState } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { useToast } from "@/components/ui/use-toast"
 
 interface ProductCardProps {
   product: {
@@ -27,6 +28,7 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const { data: session } = useSession()
   const router = useRouter()
+  const { toast } = useToast()
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [isAddingToWishlist, setIsAddingToWishlist] = useState(false)
 
@@ -53,11 +55,25 @@ export function ProductCard({ product }: ProductCardProps) {
       })
 
       if (response.ok) {
-        // Show success message or update cart count
+        toast({
+          title: "Added to cart",
+          description: `${product.name} has been added to your cart.`,
+        })
         router.refresh()
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to add product to cart.",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error("Failed to add to cart:", error)
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      })
     } finally {
       setIsAddingToCart(false)
     }
@@ -83,20 +99,34 @@ export function ProductCard({ product }: ProductCardProps) {
       })
 
       if (response.ok) {
-        // Show success message
+        toast({
+          title: "Added to wishlist",
+          description: `${product.name} has been added to your wishlist.`,
+        })
         router.refresh()
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to add product to wishlist.",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error("Failed to add to wishlist:", error)
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      })
     } finally {
       setIsAddingToWishlist(false)
     }
   }
 
   return (
-    <Card className="overflow-hidden h-full transition-all hover:shadow-md">
-      <div className="aspect-square relative overflow-hidden bg-gray-100 dark:bg-gray-800">
-        <Link href={`/products/${product.slug}`}>
+    <Card className="overflow-hidden h-full transition-all hover:shadow-md border-0 shadow-sm">
+      <Link href={`/products/${product.slug}`} className="block">
+        <div className="aspect-square relative overflow-hidden bg-gray-100 dark:bg-gray-800">
           {product.images && product.images.length > 0 ? (
             <Image
               src={product.images[0] || "/placeholder.svg"}
@@ -112,22 +142,14 @@ export function ProductCard({ product }: ProductCardProps) {
           {product.compareAtPrice && product.compareAtPrice > product.price && (
             <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">Sale</div>
           )}
-        </Link>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800"
-          onClick={handleAddToWishlist}
-          disabled={isAddingToWishlist}
-        >
-          <Heart className="h-4 w-4" />
-          <span className="sr-only">Add to wishlist</span>
-        </Button>
-      </div>
+        </div>
+      </Link>
+
       <CardContent className="p-4">
-        <Link href={`/products/${product.slug}`}>
+        <Link href={`/products/${product.slug}`} className="block">
           <h3 className="font-medium text-lg mb-1 line-clamp-1">{product.name}</h3>
         </Link>
+
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <span className="font-bold">{formatPrice(product.price)}</span>
@@ -136,11 +158,17 @@ export function ProductCard({ product }: ProductCardProps) {
             )}
           </div>
         </div>
-        <Button className="w-full" onClick={handleAddToCart} disabled={!isInStock || isAddingToCart}>
-          {isInStock ? "Add to Cart" : "Out of Stock"}
-        </Button>
+
+        <div className="flex gap-2">
+          <Button className="flex-1" onClick={handleAddToCart} disabled={!isInStock || isAddingToCart}>
+            {isAddingToCart ? "Adding..." : isInStock ? "Add to Cart" : "Out of Stock"}
+          </Button>
+          <Button variant="outline" size="icon" onClick={handleAddToWishlist} disabled={isAddingToWishlist}>
+            <Heart className="h-4 w-4" />
+            <span className="sr-only">Add to wishlist</span>
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )
 }
-

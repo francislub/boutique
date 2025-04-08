@@ -60,6 +60,17 @@ export async function createProduct(data: {
       },
     })
 
+    // Create a default variant for the product
+    const defaultVariant = await prisma.productVariant.create({
+      data: {
+        sku: `${data.sku}-default`,
+        price: data.price,
+        attributes: {},
+        images: data.images,
+        productId: product.id,
+      },
+    })
+
     // Create variants if provided
     if (data.variants && data.variants.length > 0) {
       await prisma.productVariant.createMany({
@@ -83,21 +94,13 @@ export async function createProduct(data: {
         },
       })
 
-      // Get the variants we just created
-      const variants = await prisma.productVariant.findMany({
-        where: { productId: product.id },
-      })
-
       // Create inventory items
       if (data.inventory.items && data.inventory.items.length > 0) {
         await prisma.inventoryItem.createMany({
           data: data.inventory.items.map((item) => {
-            // If variantId is not provided, use the first variant
-            const variantId = item.variantId || variants[0]?.id
-
             return {
               inventoryId: inventory.id,
-              variantId,
+              variantId: defaultVariant.id, // Use the default variant we created
               quantity: item.quantity,
               location: item.location,
             }
@@ -326,4 +329,3 @@ export async function getProductBySlug(slug: string) {
     return { success: false, error: "Failed to fetch product" }
   }
 }
-

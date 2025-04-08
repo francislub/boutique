@@ -1,22 +1,10 @@
-"use client"
-
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { getAllCategories, deleteCategory } from "@/lib/actions/category"
-import { Edit, Folder, FolderPlus, Plus, Trash } from "lucide-react"
+import { getAllCategories } from "@/lib/actions/category"
+import { Edit, Folder, FolderPlus, Plus } from "lucide-react"
 import Link from "next/link"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+import { DeleteCategoryButton } from "@/components/delete-category-button"
 
 export default async function CategoriesPage() {
   const { data: categories } = await getAllCategories()
@@ -80,43 +68,7 @@ export default async function CategoriesPage() {
                               <span className="sr-only">Add Subcategory</span>
                             </Link>
                           </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="text-destructive">
-                                <Trash className="h-4 w-4" />
-                                <span className="sr-only">Delete</span>
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete the category and may affect
-                                  products assigned to it.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={async () => {
-                                    try {
-                                      const result = await deleteCategory(category.id)
-                                      if (result.success) {
-                                        window.location.reload()
-                                      } else {
-                                        alert(result.error || "Failed to delete category")
-                                      }
-                                    } catch (error) {
-                                      console.error("Failed to delete category:", error)
-                                    }
-                                  }}
-                                  className="bg-destructive text-destructive-foreground"
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                          <DeleteCategoryButton categoryId={category.id} />
                         </div>
                       </TableCell>
                     </TableRow>
@@ -172,43 +124,7 @@ export default async function CategoriesPage() {
                                   <span className="sr-only">Edit</span>
                                 </Link>
                               </Button>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="text-destructive">
-                                    <Trash className="h-4 w-4" />
-                                    <span className="sr-only">Delete</span>
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      This action cannot be undone. This will permanently delete the category and may
-                                      affect products assigned to it.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={async () => {
-                                        try {
-                                          const result = await deleteCategory(subcategory.id)
-                                          if (result.success) {
-                                            window.location.reload()
-                                          } else {
-                                            alert(result.error || "Failed to delete category")
-                                          }
-                                        } catch (error) {
-                                          console.error("Failed to delete category:", error)
-                                        }
-                                      }}
-                                      className="bg-destructive text-destructive-foreground"
-                                    >
-                                      Delete
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
+                              <DeleteCategoryButton categoryId={subcategory.id} />
                             </div>
                           </TableCell>
                         </TableRow>
@@ -223,4 +139,3 @@ export default async function CategoriesPage() {
     </div>
   )
 }
-

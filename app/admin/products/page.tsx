@@ -1,12 +1,13 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { getAllProducts, deleteProduct } from "@/lib/actions/product"
 import { formatPrice } from "@/lib/utils"
-import { Edit, Plus, Search, Trash, Package } from "lucide-react"
+import { Edit, Plus, Search, Trash, Package, Loader2 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import {
@@ -20,17 +21,71 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { useRouter, useSearchParams } from "next/navigation"
 
-export default async function ProductsPage({
-  searchParams,
-}: {
-  searchParams: { search?: string }
-}) {
-  const search = searchParams.search || ""
-  const { data: products } = await getAllProducts({
-    search,
-    limit: 10,
-  })
+export default function ProductsPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const searchQuery = searchParams.get("search") || ""
+
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [searchInput, setSearchInput] = useState(searchQuery)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true)
+      try {
+        const result = await getAllProducts({
+          search: searchQuery,
+          limit: 10,
+        })
+
+        if (result.success) {
+          setProducts(result.data || [])
+        } else {
+          console.error("Failed to fetch products:", result.error)
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProducts()
+  }, [searchQuery])
+
+  const handleSearch = (e) => {
+    e.preventDefault()
+    const params = new URLSearchParams(searchParams)
+
+    if (searchInput) {
+      params.set("search", searchInput)
+    } else {
+      params.delete("search")
+    }
+
+    router.push(`/admin/products?${params.toString()}`)
+  }
+
+  const handleDelete = async (productId) => {
+    setIsDeleting(true)
+    try {
+      const result = await deleteProduct(productId)
+      if (result.success) {
+        // Remove the product from the state to avoid a full page reload
+        setProducts(products.filter((product) => product.id !== productId))
+      } else {
+        console.error("Failed to delete product:", result.error)
+      }
+    } catch (error) {
+      console.error("Error deleting product:", error)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -50,13 +105,20 @@ export default async function ProductsPage({
           <CardDescription>Manage your product catalog, update details, and control inventory.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4 mb-4">
+          <form onSubmit={handleSearch} className="flex items-center gap-4 mb-4">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search products..." className="pl-8" defaultValue={search} />
+              <Input
+                placeholder="Search products..."
+                className="pl-8"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+              />
             </div>
-            <Button variant="outline">Filter</Button>
-          </div>
+            <Button type="submit" variant="outline">
+              Search
+            </Button>
+          </form>
 
           <div className="rounded-md border">
             <Table>
@@ -72,7 +134,16 @@ export default async function ProductsPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {products?.length ? (
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center">
+                      <div className="flex justify-center items-center">
+                        <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                        Loading products...
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : products.length > 0 ? (
                   products.map((product) => (
                     <TableRow key={product.id}>
                       <TableCell>
@@ -123,19 +194,18 @@ export default async function ProductsPage({
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
-                                  onClick={async () => {
-                                    try {
-                                      const result = await deleteProduct(product.id)
-                                      if (result.success) {
-                                        window.location.reload()
-                                      }
-                                    } catch (error) {
-                                      console.error("Failed to delete product:", error)
-                                    }
-                                  }}
+                                  onClick={() => handleDelete(product.id)}
                                   className="bg-destructive text-destructive-foreground"
+                                  disabled={isDeleting}
                                 >
-                                  Delete
+                                  {isDeleting ? (
+                                    <>
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                      Deleting...
+                                    </>
+                                  ) : (
+                                    "Delete"
+                                  )}
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
@@ -159,4 +229,3 @@ export default async function ProductsPage({
     </div>
   )
 }
-
