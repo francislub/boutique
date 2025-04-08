@@ -34,6 +34,18 @@ export async function createProduct(data: {
   }
 }) {
   try {
+    // Check if a product with the same SKU already exists
+    const existingProduct = await prisma.product.findUnique({
+      where: { sku: data.sku },
+    })
+
+    if (existingProduct) {
+      return {
+        success: false,
+        error: "A product with this SKU already exists. Please use a different SKU.",
+      }
+    }
+
     // Generate a slug from the product name
     const slug = data.name
       .toLowerCase()
@@ -138,6 +150,23 @@ export async function updateProduct(
   },
 ) {
   try {
+    // If SKU is being updated, check if it already exists on another product
+    if (data.sku) {
+      const existingProduct = await prisma.product.findFirst({
+        where: {
+          sku: data.sku,
+          id: { not: productId }, // Exclude the current product
+        },
+      })
+
+      if (existingProduct) {
+        return {
+          success: false,
+          error: "A product with this SKU already exists. Please use a different SKU.",
+        }
+      }
+    }
+
     // If name is being updated, update the slug as well
     const updateData: any = { ...data }
     if (data.name) {

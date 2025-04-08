@@ -9,16 +9,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { useState, useEffect } from "react"
 import { createProduct } from "@/lib/actions/product"
+import { generateUniqueSku } from "@/lib/actions/sku"
 import { getAllCategories } from "@/lib/actions/category"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
-import { Loader2, Plus, Trash } from "lucide-react"
+import { Loader2, Plus, Trash, RefreshCw } from "lucide-react"
 
 export default function NewProductPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
+  const [isGeneratingSku, setIsGeneratingSku] = useState(false)
   const [categories, setCategories] = useState([])
+  const [skuError, setSkuError] = useState("")
 
   const [formData, setFormData] = useState({
     name: "",
@@ -57,6 +60,12 @@ export default function NewProductPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target
+
+    // Clear SKU error when SKU is changed
+    if (name === "sku") {
+      setSkuError("")
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -110,6 +119,44 @@ export default function NewProductPage() {
     }))
   }
 
+  const generateSku = async () => {
+    setIsGeneratingSku(true)
+    try {
+      // Generate a base SKU from the product name if it exists
+      let baseSku = ""
+      if (formData.name) {
+        // Take first letters of each word and add a random number
+        baseSku = formData.name
+          .split(" ")
+          .map((word) => word.charAt(0).toUpperCase())
+          .join("")
+        baseSku += Math.floor(1000 + Math.random() * 9000) // Add a 4-digit number
+      } else {
+        // If no name, just use a random string
+        baseSku = "SKU" + Math.floor(10000 + Math.random() * 90000)
+      }
+
+      // Get a unique SKU based on the base SKU
+      const uniqueSku = await generateUniqueSku(baseSku)
+
+      setFormData((prev) => ({
+        ...prev,
+        sku: uniqueSku,
+      }))
+
+      setSkuError("")
+    } catch (error) {
+      console.error("Error generating SKU:", error)
+      toast({
+        title: "Error",
+        description: "Failed to generate a unique SKU",
+        variant: "destructive",
+      })
+    } finally {
+      setIsGeneratingSku(false)
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsLoading(true)
@@ -157,11 +204,21 @@ export default function NewProductPage() {
         })
         router.push("/admin/products")
       } else {
-        toast({
-          title: "Error",
-          description: result.error || "Failed to create product",
-          variant: "destructive",
-        })
+        // Check if the error is related to SKU
+        if (result.error && result.error.includes("SKU")) {
+          setSkuError(result.error)
+          toast({
+            title: "SKU Error",
+            description: result.error,
+            variant: "destructive",
+          })
+        } else {
+          toast({
+            title: "Error",
+            description: result.error || "Failed to create product",
+            variant: "destructive",
+          })
+        }
       }
     } catch (error) {
       toast({
@@ -228,7 +285,30 @@ export default function NewProductPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="sku">SKU</Label>
-                  <Input id="sku" name="sku" value={formData.sku} onChange={handleChange} required />
+                  <div className="flex gap-2">
+                    <Input
+                      id="sku"
+                      name="sku"
+                      value={formData.sku}
+                      onChange={handleChange}
+                      required
+                      className={skuError ? "border-red-500" : ""}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={generateSku}
+                      disabled={isGeneratingSku}
+                    >
+                      {isGeneratingSku ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  {skuError && <p className="text-sm text-red-500">{skuError}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -446,4 +526,3 @@ export default function NewProductPage() {
     </div>
   )
 }
-
