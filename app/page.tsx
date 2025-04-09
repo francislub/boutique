@@ -483,7 +483,7 @@ export default async function Home() {
                   size="sm"
                   className="text-gray-400 hover:text-white border-gray-700 hover:border-gray-500"
                 >
-                  <Link href="/signin">Admin Login</Link>
+                  <Link href="/auth/signin">Admin Login</Link>
                 </Button>
                 <Button
                   asChild
@@ -491,16 +491,16 @@ export default async function Home() {
                   size="sm"
                   className="text-gray-400 hover:text-white border-gray-700 hover:border-gray-500"
                 >
-                  <Link href="/signup">Admin Register</Link>
+                  <Link href="/auth/signup">Admin Register</Link>
                 </Button>
-                <Button
+                {/* <Button
                   asChild
                   variant="outline"
                   size="sm"
                   className="text-gray-400 hover:text-white border-gray-700 hover:border-gray-500"
                 >
                   <Link href="/admin">Admin Dashboard</Link>
-                </Button>
+                </Button> */}
               </div>
             </div>
           </div>

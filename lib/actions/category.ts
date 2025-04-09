@@ -15,13 +15,20 @@ export async function createCategory(data: {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "")
 
+    // Create the category data object
+    const categoryData: any = {
+      name: data.name,
+      description: data.description,
+      slug,
+    }
+
+    // Only add parentId if it's a valid value
+    if (data.parentId && data.parentId.trim() !== "") {
+      categoryData.parentId = data.parentId
+    }
+
     const category = await prisma.category.create({
-      data: {
-        name: data.name,
-        description: data.description,
-        slug,
-        parentId: data.parentId,
-      },
+      data: categoryData,
     })
 
     revalidatePath("/admin/categories")
@@ -168,4 +175,3 @@ export async function getCategoryBySlug(slug: string) {
     return { success: false, error: "Failed to fetch category" }
   }
 }
-

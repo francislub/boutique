@@ -279,6 +279,9 @@ export default async function OrderDetailPage({
             <Button asChild>
               <Link href={`/products`}>Continue Shopping</Link>
             </Button>
+            <Button variant="outline" asChild>
+              <Link href={`/orders/${order.id}/receipt`}>Print Receipt</Link>
+            </Button>
             {order.status === "DELIVERED" && <Button variant="outline">Write a Review</Button>}
           </div>
         </div>
@@ -286,4 +289,3 @@ export default async function OrderDetailPage({
     </div>
   )
 }
-

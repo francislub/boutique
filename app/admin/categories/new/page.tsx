@@ -53,7 +53,7 @@ export default function NewCategoryPage() {
       const result = await createCategory({
         name: formData.name,
         description: formData.description,
-        parentId: formData.parentId || undefined,
+        parentId: formData.parentId ? formData.parentId : undefined,
       })
 
       if (result.success) {
@@ -113,7 +113,12 @@ export default function NewCategoryPage() {
               <Label htmlFor="parentId">Parent Category (Optional)</Label>
               <Select
                 value={formData.parentId}
-                onValueChange={(value) => setFormData((prev) => ({ ...prev, parentId: value }))}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    parentId: value === "none" ? "" : value,
+                  }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a parent category" />
@@ -145,4 +150,3 @@ export default function NewCategoryPage() {
     </div>
   )
 }
-

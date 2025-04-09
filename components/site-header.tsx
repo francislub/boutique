@@ -21,7 +21,7 @@ import { useState } from "react"
 import { signOut, useSession } from "next-auth/react"
 
 export function SiteHeader() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const router = useRouter()
   const pathname = usePathname()
   const [searchQuery, setSearchQuery] = useState("")
@@ -54,7 +54,7 @@ export function SiteHeader() {
               <Link href="/categories" className="text-lg font-medium transition-colors hover:text-primary">
                 Categories
               </Link>
-              {session ? (
+              {status === "authenticated" ? (
                 <>
                   <Link href="/profile" className="text-lg font-medium transition-colors hover:text-primary">
                     My Account
@@ -103,6 +103,12 @@ export function SiteHeader() {
           >
             Categories
           </Link>
+          <Link href="/about" className="text-sm font-medium transition-colors hover:text-primary">
+            About
+          </Link>
+          <Link href="/support" className="text-sm font-medium transition-colors hover:text-primary">
+            Support
+          </Link>
         </nav>
 
         <div className="flex-1 flex items-center justify-end space-x-4">
@@ -142,7 +148,7 @@ export function SiteHeader() {
               </Button>
             </Link>
 
-            {session ? (
+            {status === "authenticated" ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon">
@@ -181,4 +187,3 @@ export function SiteHeader() {
     </header>
   )
 }
-
