@@ -37,8 +37,8 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    // Redirect authenticated users based on role
-    if (request.nextUrl.pathname === "/auth/signin" || request.nextUrl.pathname === "/auth/signup") {
+    // Redirect authenticated users away from auth pages
+    if (request.nextUrl.pathname.startsWith("/auth/")) {
       if (isAuthenticated) {
         if (isAdmin) {
           return NextResponse.redirect(new URL("/admin", request.url))
@@ -56,14 +56,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/admin/:path*",
-    "/profile/:path*",
-    "/orders/:path*",
-    "/cart",
-    "/wishlist",
-    "/checkout",
-    "/auth/signin",
-    "/auth/signup",
-  ],
+  matcher: ["/admin/:path*", "/profile/:path*", "/orders/:path*", "/cart", "/wishlist", "/checkout", "/auth/:path*"],
 }

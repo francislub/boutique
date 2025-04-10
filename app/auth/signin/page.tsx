@@ -40,17 +40,8 @@ export default function SignIn() {
         return
       }
 
-      // After successful sign-in, check the user's role via API
-      const response = await fetch("/api/user/role")
-      const data = await response.json()
-
-      if (data.role === "ADMIN" && callbackUrl.startsWith("/admin")) {
-        router.push("/admin")
-      } else if (data.role === "ADMIN") {
-        router.push("/admin")
-      } else {
-        router.push(callbackUrl)
-      }
+      // Redirect based on the callback URL
+      router.push(callbackUrl)
     } catch (error) {
       setError("An error occurred during sign in")
       setIsLoading(false)
