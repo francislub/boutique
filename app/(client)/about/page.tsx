@@ -119,18 +119,18 @@ export default function AboutPage() {
           <h2 className="text-2xl font-bold mb-6">Our Locations</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
-              <h3 className="text-lg font-semibold mb-2">New York Flagship</h3>
+              <h3 className="text-lg font-semibold mb-2">Kampala Uganda</h3>
               <p className="text-gray-600 mb-1">123 Fashion Avenue</p>
-              <p className="text-gray-600 mb-1">New York, NY 10001</p>
+              <p className="text-gray-600 mb-1">Kampala, NY 10001</p>
               <p className="text-gray-600 mb-4">+1 (212) 555-1234</p>
               <p className="text-gray-600">
                 <strong>Hours:</strong> Mon-Sat 10am-8pm, Sun 11am-6pm
               </p>
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-2">Los Angeles Store</h3>
+              <h3 className="text-lg font-semibold mb-2">Bugema Store</h3>
               <p className="text-gray-600 mb-1">456 Style Boulevard</p>
-              <p className="text-gray-600 mb-1">Los Angeles, CA 90210</p>
+              <p className="text-gray-600 mb-1">Bugema, CA 90210</p>
               <p className="text-gray-600 mb-4">+1 (310) 555-5678</p>
               <p className="text-gray-600">
                 <strong>Hours:</strong> Mon-Sat 10am-9pm, Sun 11am-7pm

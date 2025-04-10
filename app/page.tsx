@@ -433,8 +433,8 @@ export default async function Home() {
               <h3 className="text-lg font-bold mb-4">Contact</h3>
               <ul className="space-y-2 text-gray-400">
                 <li>123 Fashion Street</li>
-                <li>New York, NY 10001</li>
-                <li>contact@boutique.com</li>
+                <li>Kampala, NY 10001</li>
+                <li>ka@boutique.com</li>
                 <li>+1 (555) 123-4567</li>
               </ul>
             </div>
