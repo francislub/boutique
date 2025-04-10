@@ -3,11 +3,16 @@ import { authOptions } from "@/lib/auth"
 import { NextResponse } from "next/server"
 
 export async function GET() {
-  const session = await getServerSession(authOptions)
+  try {
+    const session = await getServerSession(authOptions)
 
-  if (!session) {
-    return NextResponse.json({ role: null }, { status: 401 })
+    if (!session) {
+      return NextResponse.json({ role: null }, { status: 401 })
+    }
+
+    return NextResponse.json({ role: session.user.role })
+  } catch (error) {
+    console.error("Error fetching user role:", error)
+    return NextResponse.json({ role: null, error: "Failed to fetch user role" }, { status: 500 })
   }
-
-  return NextResponse.json({ role: session.user.role })
 }
