@@ -1,3 +1,5 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { searchProducts } from "@/lib/actions/search"
@@ -7,19 +9,69 @@ import Image from "next/image"
 import Link from "next/link"
 import { addToCart } from "@/lib/actions/cart"
 import { addToWishlist } from "@/lib/actions/wishlist"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
+import { useSession } from "next-auth/react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 
-export default async function SearchPage({
-  searchParams,
-}: {
-  searchParams: { q?: string }
-}) {
-  const query = searchParams.q || ""
-  const { data: products, meta } = await searchProducts(query)
+export default function SearchPage() {
+  const searchParams = useSearchParams()
+  const query = searchParams.get("q") || ""
 
-  const session = await getServerSession(authOptions)
+  const [products, setProducts] = useState([])
+  const [meta, setMeta] = useState({ total: 0 })
+  const [loading, setLoading] = useState(true)
+  const { data: session } = useSession()
   const userId = session?.user?.id
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true)
+        const result = await searchProducts(query)
+        if (result.success) {
+          setProducts(result.data || [])
+          setMeta({ total: result.data?.length || 0 })
+        }
+      } catch (error) {
+        console.error("Error searching products:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProducts()
+  }, [query])
+
+  const handleAddToCart = async (productId) => {
+    if (!userId) return
+
+    try {
+      await addToCart(userId, {
+        productId,
+        quantity: 1,
+      })
+    } catch (error) {
+      console.error("Failed to add to cart:", error)
+    }
+  }
+
+  const handleAddToWishlist = async (productId) => {
+    if (!userId) return
+
+    try {
+      await addToWishlist(userId, productId)
+    } catch (error) {
+      console.error("Failed to add to wishlist:", error)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -55,22 +107,15 @@ export default async function SearchPage({
                   )}
                 </Link>
                 {userId && (
-                  <form
-                    action={async () => {
-                      "use server"
-                      await addToWishlist(userId, product.id)
-                    }}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2 bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800"
+                    onClick={() => handleAddToWishlist(product.id)}
                   >
-                    <Button
-                      type="submit"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-2 right-2 bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800"
-                    >
-                      <Heart className="h-4 w-4" />
-                      <span className="sr-only">Add to wishlist</span>
-                    </Button>
-                  </form>
+                    <Heart className="h-4 w-4" />
+                    <span className="sr-only">Add to wishlist</span>
+                  </Button>
                 )}
               </div>
               <CardContent className="p-4">
@@ -85,20 +130,18 @@ export default async function SearchPage({
                     )}
                   </div>
                 </div>
-                {userId && (
-                  <form
-                    action={async () => {
-                      "use server"
-                      await addToCart(userId, {
-                        productId: product.id,
-                        quantity: 1,
-                      })
-                    }}
+                {userId ? (
+                  <Button
+                    className="w-full"
+                    onClick={() => handleAddToCart(product.id)}
+                    disabled={!product.inventory?.totalQuantity}
                   >
-                    <Button type="submit" className="w-full" disabled={!product.inventory?.totalQuantity}>
-                      Add to Cart
-                    </Button>
-                  </form>
+                    Add to Cart
+                  </Button>
+                ) : (
+                  <Button asChild className="w-full">
+                    <Link href={`/auth/signin?callbackUrl=/search?q=${query}`}>Add to Cart</Link>
+                  </Button>
                 )}
               </CardContent>
             </Card>
@@ -119,4 +162,3 @@ export default async function SearchPage({
     </div>
   )
 }
-

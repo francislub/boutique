@@ -1,6 +1,9 @@
+"use client"
+
 import type React from "react"
 import { SiteHeader } from "@/components/site-header"
-import { Toaster } from "@/components/ui/toaster"
+import { SiteFooter } from "@/components/site-footer"
+import { SessionProvider } from "next-auth/react"
 
 export default function ClientLayout({
   children,
@@ -8,11 +11,12 @@ export default function ClientLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="relative flex min-h-screen flex-col">
-      <SiteHeader />
-      <main className="flex-1">{children}</main>
-      <Toaster />
-    </div>
+    <SessionProvider>
+      <div className="relative flex min-h-screen flex-col">
+        <SiteHeader />
+        <main className="flex-1">{children}</main>
+        <SiteFooter />
+      </div>
+    </SessionProvider>
   )
 }
-

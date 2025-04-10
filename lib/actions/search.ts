@@ -22,7 +22,7 @@ export async function searchProducts(query: string) {
         category: true,
         inventory: true,
       },
-      take: 10,
+      take: 20,
     })
 
     return { success: true, data: products }
@@ -102,4 +102,3 @@ export async function searchCustomers(query: string) {
     return { success: false, error: "Failed to search customers" }
   }
 }
-
