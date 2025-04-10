@@ -1,5 +1,6 @@
 "use client"
 
+export const dynamic = "force-dynamic";
 import type React from "react"
 
 import { useState } from "react"
@@ -40,19 +41,29 @@ export default function SignIn() {
         return
       }
 
-      router.push(callbackUrl)
+      // Fetch the user session to get the role
+      const response = await fetch("/api/auth/session")
+      const session = await response.json()
+
+      if (session?.user?.role === "ADMIN") {
+        // Redirect admin users to the admin dashboard
+        router.push("/admin")
+      } else {
+        // Redirect regular users to the callback URL or home
+        router.push(callbackUrl)
+      }
     } catch (error) {
-      setError("An error occurred. Please try again.")
+      setError("An error occurred during sign in")
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/40">
+    <div className="flex min-h-screen items-center justify-center px-4 py-12">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Sign in</CardTitle>
-          <CardDescription>Enter your credentials to access your account</CardDescription>
+          <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
+          <CardDescription>Enter your email and password to sign in to your account</CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
@@ -76,7 +87,7 @@ export default function SignIn() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <Link href="/auth/forgot-password" className="text-sm text-primary hover:underline">
+                <Link href="/auth/forgot-password" className="text-sm text-blue-600 hover:text-blue-800">
                   Forgot password?
                 </Link>
               </div>
@@ -89,20 +100,21 @@ export default function SignIn() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign in"}
+              {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col">
-          <div className="text-sm text-muted-foreground text-center">
+        <CardFooter className="flex flex-col space-y-4">
+          <div className="text-center text-sm">
             Don&apos;t have an account?{" "}
-            <Link href="/auth/signup" className="text-primary hover:underline">
+            <Link href="/auth/signup" className="text-blue-600 hover:text-blue-800">
               Sign up
             </Link>
           </div>
-          <div className="text-sm text-center mt-2">
-            <Link href="/auth/admin-signup" className="text-blue-600 hover:underline">
-              Register as Admin
+          <div className="text-center text-sm">
+            Are you an administrator?{" "}
+            <Link href="/auth/admin-signup" className="text-blue-600 hover:text-blue-800">
+              Admin Sign up
             </Link>
           </div>
         </CardFooter>

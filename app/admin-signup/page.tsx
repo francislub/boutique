@@ -9,10 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle, ShieldCheck } from "lucide-react"
+import { AlertCircle } from "lucide-react"
 import Link from "next/link"
-import { createUser } from "@/lib/actions/user"
-import { UserRole } from "@prisma/client"
 
 export default function AdminSignUp() {
   const router = useRouter()
@@ -21,7 +19,6 @@ export default function AdminSignUp() {
     email: "",
     password: "",
     confirmPassword: "",
-    phone: "",
     adminCode: "",
   })
   const [error, setError] = useState("")
@@ -44,46 +41,49 @@ export default function AdminSignUp() {
       return
     }
 
-    // Validate admin code
-    if (formData.adminCode !== "123") {
-      // In production, use a more secure method
-      setError("Invalid admin registration code")
+    // Validate admin code (you can replace this with your actual admin code)
+    const validAdminCode = "ADMIN123" // In a real app, this would be stored securely
+    if (formData.adminCode !== validAdminCode) {
+      setError("Invalid admin code")
       setIsLoading(false)
       return
     }
 
     try {
-      const result = await createUser({
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        phone: formData.phone,
-        role: UserRole.ADMIN, // Explicitly set role to ADMIN
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: "ADMIN", // Explicitly set the role to ADMIN
+        }),
       })
 
-      if (!result.success) {
-        setError(result.error || "Failed to create admin account")
-        setIsLoading(false)
-        return
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || "Something went wrong")
       }
 
-      // Redirect to sign in page
-      router.push("/signin?registered=true")
-    } catch (error) {
-      setError("An error occurred. Please try again.")
+      // Redirect to sign in page after successful registration
+      router.push("/auth/signin?success=Account created successfully. Please sign in.")
+    } catch (error: any) {
+      setError(error.message || "An error occurred during registration")
+    } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/40">
-      <Card className="w-full max-w-md border-amber-500">
+    <div className="flex min-h-screen items-center justify-center px-4 py-12">
+      <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <div className="flex items-center justify-center mb-2">
-            <ShieldCheck className="h-8 w-8 text-amber-500" />
-          </div>
-          <CardTitle className="text-2xl font-bold text-center">Admin Registration</CardTitle>
-          <CardDescription className="text-center">Create an administrator account</CardDescription>
+          <CardTitle className="text-2xl font-bold">Admin Registration</CardTitle>
+          <CardDescription>Create an administrator account for the boutique management system</CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
@@ -98,7 +98,8 @@ export default function AdminSignUp() {
               <Input
                 id="name"
                 name="name"
-                placeholder="Admin Name"
+                type="text"
+                placeholder="John Doe"
                 value={formData.name}
                 onChange={handleChange}
                 required
@@ -110,21 +111,10 @@ export default function AdminSignUp() {
                 id="email"
                 name="email"
                 type="email"
-                placeholder="admin@example.com"
+                placeholder="name@example.com"
                 value={formData.email}
                 onChange={handleChange}
                 required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number (optional)</Label>
-              <Input
-                id="phone"
-                name="phone"
-                type="tel"
-                placeholder="+1 (555) 123-4567"
-                value={formData.phone}
-                onChange={handleChange}
               />
             </div>
             <div className="space-y-2">
@@ -150,33 +140,31 @@ export default function AdminSignUp() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="adminCode">Admin Registration Code</Label>
+              <Label htmlFor="adminCode">Admin Code</Label>
               <Input
                 id="adminCode"
                 name="adminCode"
-                type="password"
-                placeholder="Enter admin code"
+                type="text"
+                placeholder="Enter admin authorization code"
                 value={formData.adminCode}
                 onChange={handleChange}
                 required
               />
+              <p className="text-xs text-gray-500">
+                This code is required to create an admin account. Contact the system administrator if you don't have
+                one.
+              </p>
             </div>
-            <Button type="submit" className="w-full bg-amber-500 hover:bg-amber-600" disabled={isLoading}>
-              {isLoading ? "Creating admin account..." : "Create admin account"}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Creating Account..." : "Create Admin Account"}
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-2">
-          <div className="text-sm text-muted-foreground text-center">
+        <CardFooter className="flex justify-center">
+          <div className="text-center text-sm">
             Already have an account?{" "}
-            <Link href="/signin" className="text-primary hover:underline">
+            <Link href="/auth/signin" className="text-blue-600 hover:text-blue-800">
               Sign in
-            </Link>
-          </div>
-          <div className="text-sm text-muted-foreground text-center">
-            Need a customer account instead?{" "}
-            <Link href="/signup" className="text-primary hover:underline">
-              Register as customer
             </Link>
           </div>
         </CardFooter>
@@ -184,4 +172,3 @@ export default function AdminSignUp() {
     </div>
   )
 }
-

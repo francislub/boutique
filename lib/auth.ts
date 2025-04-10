@@ -58,13 +58,17 @@ export const authOptions: NextAuthOptions = {
     },
   },
   pages: {
-    signIn: "/signin",
-    signOut: "/signout",
-    error: "/error",
+    signIn: "/auth/signin",
+    signOut: "/auth/signout",
+    error: "/auth/error",
   },
   session: {
     strategy: "jwt",
   },
   secret: process.env.NEXTAUTH_SECRET,
+  events: {
+    async signIn({ user }) {
+      // We'll handle redirection in the signin page
+    },
+  },
 }
-
