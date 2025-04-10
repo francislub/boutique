@@ -12,63 +12,107 @@ import { formatPrice } from "@/lib/utils"
 import { ShoppingBag, Heart, Search, Filter } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 
-export default async function ProductsPage({
-  searchParams,
-}: {
-  searchParams: {
-    search?: string
-    category?: string
-    sort?: string
-    min?: string
-    max?: string
-    featured?: string
-    sale?: string
-    page?: string
-  }
-}) {
+export default function ProductsPage() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
   // Get filter parameters
-  const search = searchParams?.search || ""
-  const categoryId = searchParams?.category
-  const sort = searchParams?.sort || "newest"
-  const minPrice = searchParams?.min ? Number.parseFloat(searchParams.min) : undefined
-  const maxPrice = searchParams?.max ? Number.parseFloat(searchParams.max) : undefined
-  const isFeatured = searchParams?.featured === "true" ? true : undefined
-  const onSale = searchParams?.sale === "true"
-  const page = searchParams?.page ? Number.parseInt(searchParams.page) : 1
+  const search = searchParams.get("search") || ""
+  const categoryId = searchParams.get("category") || ""
+  const sort = searchParams.get("sort") || "newest"
+  const minPriceParam = searchParams.get("min")
+  const maxPriceParam = searchParams.get("max")
+  const minPrice = minPriceParam ? Number.parseFloat(minPriceParam) : undefined
+  const maxPrice = maxPriceParam ? Number.parseFloat(maxPriceParam) : undefined
+  const isFeatured = searchParams.get("featured") === "true"
+  const onSale = searchParams.get("sale") === "true"
+  const pageParam = searchParams.get("page")
+  const page = pageParam ? Number.parseInt(pageParam) : 1
   const pageSize = 12
 
-  // Fetch products with filters
-  const { data: products, meta } = await getAllProducts({
-    search,
-    categoryId,
-    sort:
-      sort === "price-asc"
-        ? { field: "price", direction: "asc" }
-        : sort === "price-desc"
-          ? { field: "price", direction: "desc" }
-          : { field: "createdAt", direction: "desc" },
-    isFeatured,
-    // We'll filter by price range in the component since Prisma doesn't support this directly
-    page,
-    pageSize,
-  })
+  const [products, setProducts] = useState([])
+  const [categories, setCategories] = useState([])
+  const [totalProducts, setTotalProducts] = useState(0)
+  const [loading, setLoading] = useState(true)
 
-  // Fetch categories for filter
-  const { data: categories } = await getAllCategories()
+  // Form state
+  const [searchValue, setSearchValue] = useState(search)
+  const [categoryValue, setCategoryValue] = useState(categoryId)
+  const [sortValue, setSortValue] = useState(sort)
+  const [minPriceValue, setMinPriceValue] = useState(minPrice || 0)
+  const [maxPriceValue, setMaxPriceValue] = useState(maxPrice || 1000)
+  const [isFeaturedValue, setIsFeaturedValue] = useState(isFeatured)
+  const [onSaleValue, setOnSaleValue] = useState(onSale)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+
+      try {
+        // Fetch products with filters
+        const productsResponse = await getAllProducts({
+          search,
+          categoryId: categoryId || undefined,
+          sort:
+            sort === "price-asc"
+              ? { field: "price", direction: "asc" }
+              : sort === "price-desc"
+                ? { field: "price", direction: "desc" }
+                : { field: "createdAt", direction: "desc" },
+          isFeatured: isFeatured || undefined,
+          page,
+          pageSize,
+        })
+
+        // Fetch categories for filter
+        const categoriesResponse = await getAllCategories()
+
+        setProducts(productsResponse.data || [])
+        setTotalProducts(productsResponse.meta?.total || 0)
+        setCategories(categoriesResponse.data || [])
+      } catch (error) {
+        console.error("Error fetching data:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [search, categoryId, sort, isFeatured, page, pageSize])
 
   // Filter products by price range if needed
-  const filteredProducts =
-    products?.filter((product) => {
-      if (minPrice && product.price < minPrice) return false
-      if (maxPrice && product.price > maxPrice) return false
-      if (onSale && (!product.compareAtPrice || product.compareAtPrice <= product.price)) return false
-      return true
-    }) || []
+  const filteredProducts = products.filter((product) => {
+    if (minPrice && product.price < minPrice) return false
+    if (maxPrice && product.price > maxPrice) return false
+    if (onSale && (!product.compareAtPrice || product.compareAtPrice <= product.price)) return false
+    return true
+  })
 
   // Calculate total pages
-  const totalProducts = meta?.total || 0
   const totalPages = Math.ceil(totalProducts / pageSize)
+
+  const applyFilters = () => {
+    const params = new URLSearchParams()
+
+    if (searchValue) params.set("search", searchValue)
+    if (categoryValue && categoryValue !== "all") params.set("category", categoryValue)
+    if (sortValue !== "newest") params.set("sort", sortValue)
+    if (minPriceValue > 0) params.set("min", minPriceValue.toString())
+    if (maxPriceValue < 1000) params.set("max", maxPriceValue.toString())
+    if (isFeaturedValue) params.set("featured", "true")
+    if (onSaleValue) params.set("sale", "true")
+
+    router.push(`/products?${params.toString()}`)
+  }
+
+  const handlePageChange = (newPage) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set("page", newPage.toString())
+    router.push(`/products?${params.toString()}`)
+  }
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900 min-h-screen py-10">
@@ -87,7 +131,21 @@ export default async function ProductsPage({
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-medium">Filters</h3>
-                <Button variant="ghost" size="sm" className="text-xs">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => {
+                    setSearchValue("")
+                    setCategoryValue("")
+                    setSortValue("newest")
+                    setMinPriceValue(0)
+                    setMaxPriceValue(1000)
+                    setIsFeaturedValue(false)
+                    setOnSaleValue(false)
+                    router.push("/products")
+                  }}
+                >
                   Reset
                 </Button>
               </div>
@@ -99,7 +157,13 @@ export default async function ProductsPage({
                   </label>
                   <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input id="search" placeholder="Search products..." className="pl-8" defaultValue={search} />
+                    <Input
+                      id="search"
+                      placeholder="Search products..."
+                      className="pl-8"
+                      value={searchValue}
+                      onChange={(e) => setSearchValue(e.target.value)}
+                    />
                   </div>
                 </div>
 
@@ -108,7 +172,7 @@ export default async function ProductsPage({
                   <label htmlFor="category" className="text-sm font-medium mb-2 block">
                     Category
                   </label>
-                  <Select defaultValue={categoryId}>
+                  <Select value={categoryValue} onValueChange={setCategoryValue}>
                     <SelectTrigger id="category" className="w-full">
                       <SelectValue placeholder="All Categories" />
                     </SelectTrigger>
@@ -127,18 +191,39 @@ export default async function ProductsPage({
                 <div>
                   <label className="text-sm font-medium mb-2 block">Price Range</label>
                   <div className="pt-4 px-2">
-                    <Slider defaultValue={[0, 1000]} max={1000} step={10} className="mb-6" />
+                    <Slider
+                      value={[minPriceValue, maxPriceValue]}
+                      max={1000}
+                      step={10}
+                      className="mb-6"
+                      onValueChange={(values) => {
+                        setMinPriceValue(values[0])
+                        setMaxPriceValue(values[1])
+                      }}
+                    />
                     <div className="flex items-center justify-between">
-                      <Input type="number" placeholder="Min" className="w-20" defaultValue={minPrice} />
+                      <Input
+                        type="number"
+                        placeholder="Min"
+                        className="w-20"
+                        value={minPriceValue}
+                        onChange={(e) => setMinPriceValue(Number(e.target.value))}
+                      />
                       <span className="text-muted-foreground">to</span>
-                      <Input type="number" placeholder="Max" className="w-20" defaultValue={maxPrice} />
+                      <Input
+                        type="number"
+                        placeholder="Max"
+                        className="w-20"
+                        value={maxPriceValue}
+                        onChange={(e) => setMaxPriceValue(Number(e.target.value))}
+                      />
                     </div>
                   </div>
                 </div>
 
                 {/* Featured */}
                 <div className="flex items-center space-x-2">
-                  <Checkbox id="featured" defaultChecked={isFeatured} />
+                  <Checkbox id="featured" checked={isFeaturedValue} onCheckedChange={setIsFeaturedValue} />
                   <label
                     htmlFor="featured"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -149,7 +234,7 @@ export default async function ProductsPage({
 
                 {/* On Sale */}
                 <div className="flex items-center space-x-2">
-                  <Checkbox id="sale" defaultChecked={onSale} />
+                  <Checkbox id="sale" checked={onSaleValue} onCheckedChange={setOnSaleValue} />
                   <label
                     htmlFor="sale"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -158,7 +243,9 @@ export default async function ProductsPage({
                   </label>
                 </div>
 
-                <Button className="w-full mt-4">Apply Filters</Button>
+                <Button className="w-full mt-4" onClick={applyFilters}>
+                  Apply Filters
+                </Button>
               </div>
             </div>
           </div>
@@ -174,7 +261,7 @@ export default async function ProductsPage({
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Select defaultValue={sort}>
+                  <Select value={sortValue} onValueChange={setSortValue}>
                     <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
@@ -184,13 +271,24 @@ export default async function ProductsPage({
                       <SelectItem value="price-desc">Price: High to Low</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Button variant="outline" size="icon" className="lg:hidden">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="lg:hidden"
+                    onClick={() => {
+                      // Toggle mobile filters
+                    }}
+                  >
                     <Filter className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
 
-              {filteredProducts.length > 0 ? (
+              {loading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                </div>
+              ) : filteredProducts.length > 0 ? (
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {filteredProducts.map((product) => (
@@ -245,13 +343,7 @@ export default async function ProductsPage({
                   {totalPages > 1 && (
                     <div className="flex justify-center mt-8">
                       <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          disabled={page <= 1}
-                          onClick={() => {
-                            // Handle pagination
-                          }}
-                        >
+                        <Button variant="outline" disabled={page <= 1} onClick={() => handlePageChange(page - 1)}>
                           Previous
                         </Button>
                         {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
@@ -259,6 +351,7 @@ export default async function ProductsPage({
                             key={pageNum}
                             variant={pageNum === page ? "default" : "outline"}
                             className={pageNum === page ? "bg-primary text-primary-foreground" : ""}
+                            onClick={() => handlePageChange(pageNum)}
                           >
                             {pageNum}
                           </Button>
@@ -266,9 +359,7 @@ export default async function ProductsPage({
                         <Button
                           variant="outline"
                           disabled={page >= totalPages}
-                          onClick={() => {
-                            // Handle pagination
-                          }}
+                          onClick={() => handlePageChange(page + 1)}
                         >
                           Next
                         </Button>

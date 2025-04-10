@@ -66,9 +66,4 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   secret: process.env.NEXTAUTH_SECRET,
-  events: {
-    async signIn({ user }) {
-      // We'll handle redirection in the signin page
-    },
-  },
 }
