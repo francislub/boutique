@@ -3,8 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { signIn } from "next-auth/react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,12 +12,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
 import Link from "next/link"
 
-export default function SignIn() {
+export default function SignUp() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const callbackUrl = searchParams?.get("callbackUrl") || "/"
+  const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
 
@@ -27,23 +26,39 @@ export default function SignIn() {
     setIsLoading(true)
     setError("")
 
+    if (password !== confirmPassword) {
+      setError("Passwords do not match")
+      setIsLoading(false)
+      return
+    }
+
     try {
-      const result = await signIn("credentials", {
-        redirect: false,
-        email,
-        password,
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+        }),
       })
 
-      if (result?.error) {
-        setError("Invalid email or password")
-        setIsLoading(false)
-        return
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || "Something went wrong")
       }
 
-      // Redirect based on the callback URL
-      router.push(callbackUrl)
+      // Redirect to sign in page after successful registration
+      router.push("/auth/signin")
     } catch (error) {
-      setError("An error occurred during sign in")
+      if (error instanceof Error) {
+        setError(error.message)
+      } else {
+        setError("An error occurred during registration")
+      }
       setIsLoading(false)
     }
   }
@@ -52,8 +67,8 @@ export default function SignIn() {
     <div className="flex min-h-screen items-center justify-center py-12">
       <Card className="w-full max-w-md mx-4">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
-          <CardDescription>Enter your email and password to sign in to your account</CardDescription>
+          <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
+          <CardDescription>Enter your information to create an account</CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
@@ -63,6 +78,17 @@ export default function SignIn() {
             </Alert>
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -75,12 +101,7 @@ export default function SignIn() {
               />
             </div>
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Link href="/auth/forgot-password" className="text-sm text-blue-600 hover:text-blue-800">
-                  Forgot password?
-                </Link>
-              </div>
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -89,22 +110,26 @@ export default function SignIn() {
                 required
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign In"}
+              {isLoading ? "Creating account..." : "Create account"}
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-4">
+        <CardFooter className="flex justify-center">
           <div className="text-center text-sm">
-            Don&apos;t have an account?{" "}
-            <Link href="/auth/signup" className="text-blue-600 hover:text-blue-800">
-              Sign up
-            </Link>
-          </div>
-          <div className="text-center text-sm">
-            Are you an administrator?{" "}
-            <Link href="/auth/admin-signup" className="text-blue-600 hover:text-blue-800">
-              Admin Sign up
+            Already have an account?{" "}
+            <Link href="/auth/signin" className="text-blue-600 hover:text-blue-800">
+              Sign in
             </Link>
           </div>
         </CardFooter>
